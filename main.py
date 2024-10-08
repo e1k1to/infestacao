@@ -5,6 +5,7 @@ from pygame.locals import *
 
 all_sprites = pygame.sprite.Group()
 inimigos = []
+inimigos_mortos = []
 
 pygame.init()
 
@@ -41,12 +42,21 @@ class Cursor(pygame.sprite.Sprite):
             self.shootproj(self.position.x, self.position.y)
 
         # Atualiza a posição do retângulo da nave
+        xcentro = self.rect.center[0]
+        ycentro = self.rect.center[1]
+        
+        for inimigo in inimigos:
+            if(xcentro > inimigo.rect.left and xcentro < inimigo.rect.right and ycentro > inimigo.rect.top and ycentro < inimigo.rect.bottom):
+                inimigo.morte()
+                inimigos.remove(inimigo)
+                inimigos_mortos.append(inimigos)
+        
         self.rect.center = self.position
 
 class Inimigo(pygame.sprite.Sprite):
-    def __init__(self):
+    def __init__(self, x, y):
         super(Inimigo, self).__init__()
-        self.position = pygame.math.Vector2(200,300)
+        self.position = pygame.math.Vector2(x,y)
         self.speed = 3
         
         self.image = pygame.image.load('formiga.png')
@@ -56,10 +66,11 @@ class Inimigo(pygame.sprite.Sprite):
   
     def update(self):
         # Atualiza a posição do retângulo da nave
-        for inimigo in inimigos:
-            if(self.position == inimigo.position):
-                print("AHHAHAHAH")
         self.rect.center = self.position
+
+    def morte(self):
+        self.image = pygame.image.load('formiga_morta.png')
+        self.image = pygame.transform.scale(self.image, (50,50))
 
 
 def main():
@@ -67,7 +78,9 @@ def main():
     cursor = Cursor()
     all_sprites.add(cursor)
     
-    inimigos.append(Inimigo())
+    inimigos.append(Inimigo(100,200))
+    inimigos.append(Inimigo(200,300))
+    inimigos.append(Inimigo(300,400))
     for inimigo in inimigos:
         all_sprites.add(inimigo)
     #bg = pygame.image.load("fundo.png")
