@@ -9,6 +9,10 @@ códigos de pause
 import pygame
 from pygame.locals import *
 
+pontuacao = 0 
+
+volume = 0.2
+sens = 5
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 inimigos = []
@@ -22,11 +26,36 @@ screen_height = 800
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('Infestação')
 
+def inverteCores(img):
+    inv = pygame.Surface(img.get_rect().size, pygame.SRCALPHA)
+    inv.fill((255,255,255,255))
+    inv.blit(img, (0,0), None, BLEND_RGB_SUB)
+    return inv
+
+def drawText(texto, tamanho, fontName, x, y, cor):
+    font = pygame.font.Font(fontName, tamanho)
+    text_surface = font.render(texto, True, cor)
+    text_rect = text_surface.get_rect()
+    text_rect.center = (x,y)
+    screen.blit(text_surface,text_rect)
+
+class gameState:
+    def __init__(self, state):
+        self.state = state
+
+    def setState(self, newState):
+        self.state = newState
+
+    def getState(self):
+        return self.state
+
+
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
         super(Cursor, self).__init__()
         self.position = pygame.math.Vector2(screen_width // 2, screen_height // 2)
-        self.speed = 5
+        global sens
+        self.speed = sens
         
         self.image = pygame.image.load('mira.png')
         self.image = pygame.transform.scale(self.image, (200,200)) 
@@ -35,7 +64,7 @@ class Cursor(pygame.sprite.Sprite):
   
     def update(self):
         keys = pygame.key.get_pressed()
-            
+
         # Movimentação
         if (keys[K_LEFT] or keys[K_a]) and self.position.x > 0:
             self.position.x -= self.speed
@@ -56,29 +85,49 @@ class Cursor(pygame.sprite.Sprite):
         for inimigo in inimigos:
             if(xcentro > inimigo.rect.left and xcentro < inimigo.rect.right and ycentro > inimigo.rect.top and ycentro < inimigo.rect.bottom):
                 inimigo.morte()
+                inimigos_mortos.append(inimigo) # pode ser usado pra calcular pontos dps
                 inimigos.remove(inimigo)
-                inimigos_mortos.append(inimigos)
         
         self.rect.center = self.position
+    def updateSpeed(self, newSpeed):
+        self.speed = newSpeed
+        return
 
 class Inimigo(pygame.sprite.Sprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y, tipo):
         super(Inimigo, self).__init__()
         self.position = pygame.math.Vector2(x,y)
         self.speed = 3
+        self.morta = False
+        self.alpha = 255
+        self.valor = 0
+
+        if (tipo == 'formiga'):
+            self.valor = 5
+            self.image = pygame.image.load('formiga.png')
+            self.image = pygame.transform.scale(self.image, (50,50)) 
         
-        self.image = pygame.image.load('formiga.png')
-        self.image = pygame.transform.scale(self.image, (50,50)) 
         self.rect = self.image.get_rect()
         self.rect.center = self.position
+        self.somMorte = pygame.mixer.Sound('smash.mp3')
   
     def update(self):
         # Atualiza a posição do retângulo da nave
         self.rect.center = self.position
+        #self.position.x -= 1
+        if self.morta == True:
+            self.alpha -= 0.05
+            self.image.fill((255,255,255,self.alpha), special_flags=pygame.BLEND_RGBA_MULT)
+        if self.alpha == 0:
+            self.kill()
 
     def morte(self):
+        global volume
+        self.somMorte.set_volume(volume)
+        self.somMorte.play()
         self.image = pygame.image.load('formiga_morta.png')
         self.image = pygame.transform.scale(self.image, (50,50))
+        self.morta = True
 
 class Button(pygame.sprite.Sprite):
     def __init__(self, x, y, image, scale):
@@ -86,17 +135,22 @@ class Button(pygame.sprite.Sprite):
         self.rect = self.img.get_rect()
         self.rect.center=(x,y)
         self.clicked = False
+        self.teste = False
 
     def draw(self):
         action = False
+        evento = False
         pos = pygame.mouse.get_pos()
+
         if self.rect.collidepoint(pos):
+            self.img = inverteCores(self.img)
             if pygame.mouse.get_pressed()[0]:
                 self.clicked = True
                 action = True
-        
+                pygame.time.delay(150)
         screen.blit(self.img, (self.rect.x, self.rect.y))
         return action
+        
 
 def pause():
     borras = pygame.Surface((screen_width, screen_height), flags=pygame.SRCALPHA)
@@ -111,20 +165,21 @@ def pause():
     if Button(500, 300, butao_quit, 1).draw():
         return 2 #volta pro menu
 
+
 def prim_fase():
+    pontuacao = 0
     game_paused = False
     
     cursor = Cursor()
     
     all_sprites.add(cursor)
-    inimigos.append(Inimigo(100,200))
-    inimigos.append(Inimigo(200,300))
-    inimigos.append(Inimigo(300,400))
+    inimigos.append(Inimigo(100,200, 'formiga'))
+    inimigos.append(Inimigo(200,300, 'formiga'))
+    inimigos.append(Inimigo(300,400, 'formiga'))
     for inimigo in inimigos:
         all_sprites.add(inimigo)
     
     running = True
-    timer = 0
     while running:
         screen.fill((255,255,255))  # Preenche o fundo de branco
         all_sprites.draw(screen)
@@ -134,8 +189,13 @@ def prim_fase():
             if id == 1:
                 game_paused = False
             elif id == 2:
+                all_sprites.remove(cursor)
+                cursor.kill()
+                for inimigo in inimigos:
+                    inimigo.kill()
+                for inimigo in inimigos_mortos:
+                    inimigo.kill()
                 running = False
-                pygame.time.delay(100)
             
         else:
             all_sprites.update()
@@ -151,23 +211,96 @@ def prim_fase():
                     game_paused = not game_paused
     return
 
+def setVolume(volumeNovo):
+    global volume
+    volume = (volumeNovo/100)
+
+def setSensibility(novaSens):
+    global sens
+    sens = novaSens
+
+def menuConfig():
+    running = True
+    global volume
+    vlm = volume*100
+    global sens
+    while running:
+        screen.fill((128,128,128))  # Preenche o fundo de branco
+        volume_down = pygame.image.load("voldown.png")
+        volume_up = pygame.image.load("volup.png")
+        botao_sair = pygame.image.load("butao_quit.png")
+        botao_config = pygame.image.load("butao_config.png")
+        
+        running_menu = True
+        
+
+        drawText(f"Volume = {int(vlm)}", 80, 'fonts/AnonymousPro-Regular.ttf', 500, 150, (255,255,255))
+        
+        drawText(f"Sensibilidade = {int(sens)}", 80, 'fonts/AnonymousPro-Regular.ttf', 500, 450, (255,255,255))
+
+        if Button(600, 300, volume_up, 1).draw():
+            if vlm >= 100:
+                pass
+            else:
+                vlm += 5
+            setVolume(vlm)
+        if Button(400, 300, volume_down, 1).draw():
+            if vlm <= 0:
+                pass
+            else:
+                    vlm -= 5
+            setVolume(vlm)
+        
+        if Button(600, 600, volume_up, 1).draw():
+            if sens >= 10:
+                pass
+            else:
+                sens += 1
+        if Button(400, 600, volume_down, 1).draw():
+            if sens <= 1:
+                pass
+            else:
+                sens -= 1
+
+        if Button(500, 725, botao_sair, 1).draw(): 
+            running = False
+                
+        clk = pygame.time.Clock().tick()
+        clock.tick(60)
+        pygame.display.flip()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+    return
+
+#def setVolume(valor):
+
+
+
 def main():
     bg = pygame.image.load("fundo.png")
     bg = pygame.transform.scale(bg, (screen_width, screen_height))
+    font = 'fonts/AnonymousPro-Regular.ttf'
     pygame.display.set_caption("Menu")
     botao_jogar = pygame.image.load("butao_jogar.png")
     botao_sair = pygame.image.load("butao_quit.png")
     botao_config = pygame.image.load("butao_config.png")
+    #pygame.mixer.Sound.set_volume(20)
     
     running_menu = True
 
     while running_menu:
         screen.blit(bg, (0,0))
+        #drawText("HAHAHAHAHAHAHA", 24, font, 100, 100, (255,255,255))
+
         if Button(500, 200, botao_jogar, 1).draw():
             prim_fase()
         
         if Button(500, 400, botao_config, 1).draw(): 
-            running_menu = False
+            menuConfig()
 
         if Button(500, 600, botao_sair, 1).draw(): 
             running_menu = False
