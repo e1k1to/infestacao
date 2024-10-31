@@ -6,6 +6,7 @@ códigos de pause
 2- voltar ao main menu
 """
 
+
 import pygame
 from pygame.locals import *
 
@@ -39,21 +40,10 @@ def drawText(texto, tamanho, fontName, x, y, cor):
     text_rect.center = (x,y)
     screen.blit(text_surface,text_rect)
 
-class gameState:
-    def __init__(self, state):
-        self.state = state
-
-    def setState(self, newState):
-        self.state = newState
-
-    def getState(self):
-        return self.state
-
-
 class Cursor(pygame.sprite.Sprite):
     def __init__(self):
         super(Cursor, self).__init__()
-        self.position = pygame.math.Vector2(screen_width // 2, screen_height // 2)
+        self.position = pygame.math.Vector2(screen_width // 2, (screen_height // 4)*3)
         global sens
         self.speed = sens
         
@@ -61,9 +51,24 @@ class Cursor(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(self.image, (200,200)) 
         self.rect = self.image.get_rect()
         self.rect.center = self.position
+        self.somRecarga = pygame.mixer.Sound('arma.mp3')
+        self.ultimoTiro = pygame.time.get_ticks()
+        self.cooldown = 1000
   
     def update(self):
         keys = pygame.key.get_pressed()
+        
+        x = self.rect.center[0]
+        y = self.rect.center[1]
+
+        if x > screen_width//2:
+            self.position.x -= 2
+        if x+1 < screen_width//2:
+            self.position.x += 2
+        if y > screen_height//4*3:
+            self.position.y -= 2
+        if y < screen_height//4*3:
+            self.position.y += 2
 
         # Movimentação
         if (keys[K_LEFT] or keys[K_a]) and self.position.x > 0:
@@ -83,51 +88,88 @@ class Cursor(pygame.sprite.Sprite):
         ycentro = self.rect.center[1]
         
         for inimigo in inimigos:
-            if(xcentro > inimigo.rect.left and xcentro < inimigo.rect.right and ycentro > inimigo.rect.top and ycentro < inimigo.rect.bottom):
-                inimigo.morte()
-                inimigos_mortos.append(inimigo) # pode ser usado pra calcular pontos dps
-                inimigos.remove(inimigo)
+            if(xcentro > inimigo.rect.left 
+               and xcentro < inimigo.rect.right 
+               and ycentro > inimigo.rect.top 
+               and ycentro < inimigo.rect.bottom
+               and pygame.time.get_ticks() - self.ultimoTiro >= self.cooldown
+               ): #adicionar delay aqui
+                self.ultimoTiro = pygame.time.get_ticks()
+                if inimigo.morte():
+                    inimigos_mortos.append(inimigo.tipo) # pode ser usado pra calcular pontos dps
+                    inimigos.remove(inimigo)
+                self.somRecarga.set_volume(volume)
+                self.somRecarga.play()
         
         self.rect.center = self.position
-    def updateSpeed(self, newSpeed):
-        self.speed = newSpeed
-        return
 
 class Inimigo(pygame.sprite.Sprite):
     def __init__(self, x, y, tipo):
         super(Inimigo, self).__init__()
         self.position = pygame.math.Vector2(x,y)
-        self.speed = 3
         self.morta = False
         self.alpha = 255
         self.valor = 0
+        self.hits = 0
+        self.angle = 1
 
         if (tipo == 'formiga'):
+            self.tipo = 'formiga'
             self.valor = 5
             self.image = pygame.image.load('formiga.png')
             self.image = pygame.transform.scale(self.image, (50,50)) 
+            self.speed = 3
+            self.maxhits = 1
+        
+        if (tipo == 'barata'):
+            self.tipo = 'barata'
+            self.valor = 10
+            self.image = pygame.image.load('formiga.png')
+            self.image = pygame.transform.scale(self.image, (60,60)) 
+            self.speed = 5
+            self.maxhits = 2
+        
+        if (tipo == 'escorpiao'):
+            self.tipo = 'escorpiao'
+            self.valor = 20
+            self.image = pygame.image.load('formiga.png')
+            self.image = pygame.transform.scale(self.image, (80,80)) 
+            self.speed = 10
+            self.maxhits = 3
         
         self.rect = self.image.get_rect()
         self.rect.center = self.position
         self.somMorte = pygame.mixer.Sound('smash.mp3')
+        self.image = pygame.transform.rotate(self.image, 180)
+
   
+
     def update(self):
         # Atualiza a posição do retângulo da nave
-        self.rect.center = self.position
-        #self.position.x -= 1
-        if self.morta == True:
+        #self.image = pygame.transform.rotate(self.image, 3) #KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKk
+
+        #self.position.x += self.speed
+        if self.morta:
             self.alpha -= 0.05
             self.image.fill((255,255,255,self.alpha), special_flags=pygame.BLEND_RGBA_MULT)
-        if self.alpha == 0:
+        if self.alpha <= 250:
             self.kill()
+        self.rect = self.image.get_rect()
+        self.rect.center = self.position
 
     def morte(self):
         global volume
         self.somMorte.set_volume(volume)
         self.somMorte.play()
-        self.image = pygame.image.load('formiga_morta.png')
-        self.image = pygame.transform.scale(self.image, (50,50))
-        self.morta = True
+
+        self.hits += 1
+
+        if self.hits == self.maxhits:
+            self.image = pygame.image.load('formiga_morta.png')
+            self.image = pygame.transform.scale(self.image, (50,50))
+            self.morta = True
+            return True
+        return False
 
 class Button(pygame.sprite.Sprite):
     def __init__(self, x, y, image, scale):
@@ -174,8 +216,8 @@ def prim_fase():
     
     all_sprites.add(cursor)
     inimigos.append(Inimigo(100,200, 'formiga'))
-    inimigos.append(Inimigo(200,300, 'formiga'))
-    inimigos.append(Inimigo(300,400, 'formiga'))
+    inimigos.append(Inimigo(200,300, 'barata'))
+    inimigos.append(Inimigo(300,400, 'escorpiao'))
     for inimigo in inimigos:
         all_sprites.add(inimigo)
     
@@ -192,8 +234,6 @@ def prim_fase():
                 all_sprites.remove(cursor)
                 cursor.kill()
                 for inimigo in inimigos:
-                    inimigo.kill()
-                for inimigo in inimigos_mortos:
                     inimigo.kill()
                 running = False
             
@@ -257,7 +297,7 @@ def menuConfig():
             else:
                 sens += 1
         if Button(400, 600, volume_down, 1).draw():
-            if sens <= 1:
+            if sens <= 3:
                 pass
             else:
                 sens -= 1
