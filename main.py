@@ -47,11 +47,11 @@ class Cursor(pygame.sprite.Sprite):
         global sens
         self.speed = sens
         
-        self.image = pygame.image.load('mira.png')
+        self.image = pygame.image.load('imagens/mira.png')
         self.image = pygame.transform.scale(self.image, (200,200)) 
         self.rect = self.image.get_rect()
         self.rect.center = self.position
-        self.somRecarga = pygame.mixer.Sound('arma.mp3')
+        self.somRecarga = pygame.mixer.Sound('audios/arma.mp3')
         self.ultimoTiro = pygame.time.get_ticks()
         self.cooldown = 1000
   
@@ -116,7 +116,7 @@ class Inimigo(pygame.sprite.Sprite):
         if (tipo == 'formiga'):
             self.tipo = 'formiga'
             self.valor = 5
-            self.image = pygame.image.load('formiga.png')
+            self.image = pygame.image.load('imagens/formiga.png')
             self.image = pygame.transform.scale(self.image, (50,50)) 
             self.speed = 3
             self.maxhits = 1
@@ -124,7 +124,7 @@ class Inimigo(pygame.sprite.Sprite):
         if (tipo == 'barata'):
             self.tipo = 'barata'
             self.valor = 10
-            self.image = pygame.image.load('formiga.png')
+            self.image = pygame.image.load('imagens/formiga.png')
             self.image = pygame.transform.scale(self.image, (60,60)) 
             self.speed = 5
             self.maxhits = 2
@@ -132,14 +132,14 @@ class Inimigo(pygame.sprite.Sprite):
         if (tipo == 'escorpiao'):
             self.tipo = 'escorpiao'
             self.valor = 20
-            self.image = pygame.image.load('formiga.png')
+            self.image = pygame.image.load('imagens/formiga.png')
             self.image = pygame.transform.scale(self.image, (80,80)) 
             self.speed = 10
             self.maxhits = 3
         
         self.rect = self.image.get_rect()
         self.rect.center = self.position
-        self.somMorte = pygame.mixer.Sound('smash.mp3')
+        self.somMorte = pygame.mixer.Sound('audios/smash.mp3')
         self.image = pygame.transform.rotate(self.image, 180)
 
   
@@ -166,7 +166,7 @@ class Inimigo(pygame.sprite.Sprite):
         self.hits += 1
 
         if self.hits == self.maxhits:
-            self.image = pygame.image.load('formiga_morta.png')
+            self.image = pygame.image.load('imagens/formiga_morta.png')
             self.image = pygame.transform.scale(self.image, (50,50))
             self.morta = True
             return True
@@ -200,11 +200,11 @@ def pause():
     borras.fill((75,75,75,100))
     screen.blit(borras, (0,0))
 
-    butao_continue = pygame.image.load("butao_continua.png")
+    butao_continue = pygame.image.load("imagens/butao_continua.png")
     if Button(500, 200, butao_continue, 1).draw():
         return 1 #volta pro jogo 
 
-    butao_quit = pygame.image.load("butao_quit.png")
+    butao_quit = pygame.image.load("imagens/butao_quit.png")
     if Button(500, 300, butao_quit, 1).draw():
         return 2 #volta pro menu
 
@@ -267,10 +267,10 @@ def menuConfig():
     global sens
     while running:
         screen.fill((128,128,128))  # Preenche o fundo de branco
-        volume_down = pygame.image.load("voldown.png")
-        volume_up = pygame.image.load("volup.png")
-        botao_sair = pygame.image.load("butao_quit.png")
-        botao_config = pygame.image.load("butao_config.png")
+        volume_down = pygame.image.load("imagens/voldown.png")
+        volume_up = pygame.image.load("imagens/volup.png")
+        botao_sair = pygame.image.load("imagens/butao_quit.png")
+        botao_config = pygame.image.load("imagens/butao_config.png")
         
         running_menu = True
         
@@ -322,13 +322,13 @@ def menuConfig():
 
 
 def main():
-    bg = pygame.image.load("fundo.png")
+    bg = pygame.image.load("imagens/fundo.png")
     bg = pygame.transform.scale(bg, (screen_width, screen_height))
     font = 'fonts/AnonymousPro-Regular.ttf'
     pygame.display.set_caption("Menu")
-    botao_jogar = pygame.image.load("butao_jogar.png")
-    botao_sair = pygame.image.load("butao_quit.png")
-    botao_config = pygame.image.load("butao_config.png")
+    botao_jogar = pygame.image.load("imagens/butao_jogar.png")
+    botao_sair = pygame.image.load("imagens/butao_quit.png")
+    botao_config = pygame.image.load("imagens/butao_config.png")
     #pygame.mixer.Sound.set_volume(20)
     
     running_menu = True
