@@ -93,7 +93,7 @@ class Cursor(pygame.sprite.Sprite):
                and ycentro > inimigo.rect.top 
                and ycentro < inimigo.rect.bottom
                and pygame.time.get_ticks() - self.ultimoTiro >= self.cooldown
-               ): #adicionar delay aqui
+               ): 
                 self.ultimoTiro = pygame.time.get_ticks()
                 if inimigo.morte():
                     inimigos_mortos.append(inimigo.tipo) # pode ser usado pra calcular pontos dps
@@ -146,7 +146,8 @@ class Inimigo(pygame.sprite.Sprite):
 
     def update(self):
         # Atualiza a posição do retângulo da nave
-        #self.image = pygame.transform.rotate(self.image, 3) #KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKk
+        #self.angle += 1
+        #self.image = pygame.transform.rotate(self.image, self.angle) #KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKk
 
         #self.position.x += self.speed
         if self.morta:
