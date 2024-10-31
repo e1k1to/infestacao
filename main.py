@@ -275,29 +275,31 @@ def menuConfig():
         running_menu = True
         
 
-        drawText(f"Volume = {int(vlm)}", 80, 'fonts/AnonymousPro-Regular.ttf', 500, 150, (255,255,255))
+        drawText(f"Volume = {int(vlm)}", 80, 'fonts/AnonymousPro-Regular.ttf', 500, 100, (255,255,255))
         
-        drawText(f"Sensibilidade = {int(sens)}", 80, 'fonts/AnonymousPro-Regular.ttf', 500, 450, (255,255,255))
+        drawText(f"Sensibilidade = {int(sens)}", 80, 'fonts/AnonymousPro-Regular.ttf', 500, 400, (255,255,255))
 
-        if Button(600, 300, volume_up, 1).draw():
+        if Button(600, 250, volume_up, 1).draw():
             if vlm >= 100:
                 pass
             else:
                 vlm += 5
             setVolume(vlm)
-        if Button(400, 300, volume_down, 1).draw():
+            pygame.mixer.music.set_volume((vlm/100)-0.10)
+        if Button(400, 250, volume_down, 1).draw():
             if vlm <= 0:
                 pass
             else:
                     vlm -= 5
             setVolume(vlm)
+            pygame.mixer.music.set_volume((vlm/100)-0.10)
         
-        if Button(600, 600, volume_up, 1).draw():
+        if Button(600, 550, volume_up, 1).draw():
             if sens >= 10:
                 pass
             else:
                 sens += 1
-        if Button(400, 600, volume_down, 1).draw():
+        if Button(400, 550, volume_down, 1).draw():
             if sens <= 3:
                 pass
             else:
@@ -322,6 +324,7 @@ def menuConfig():
 
 
 def main():
+    global volume
     bg = pygame.image.load("imagens/fundo.png")
     bg = pygame.transform.scale(bg, (screen_width, screen_height))
     font = 'fonts/AnonymousPro-Regular.ttf'
@@ -329,6 +332,12 @@ def main():
     botao_jogar = pygame.image.load("imagens/butao_jogar.png")
     botao_sair = pygame.image.load("imagens/butao_quit.png")
     botao_config = pygame.image.load("imagens/butao_config.png")
+
+    pygame.mixer.init()
+    pygame.mixer.music.load("audios/musica.mp3")
+    pygame.mixer.music.set_volume(0.03)
+    pygame.mixer.music.play()
+
     #pygame.mixer.Sound.set_volume(20)
     
     running_menu = True
