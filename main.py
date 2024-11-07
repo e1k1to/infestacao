@@ -9,15 +9,18 @@ códigos de pause
 
 import pygame
 from pygame.locals import *
+from random import randint, choice
 
 pontuacao = 0 
 
 volume = 0.2
-sens = 5
+sens = 7
 clock = pygame.time.Clock()
 all_sprites = pygame.sprite.Group()
 inimigos = []
 inimigos_mortos = []
+inimigos_fila = []
+posicoes = ['D','E']
 game_menu = True
 
 pygame.init()
@@ -104,7 +107,7 @@ class Cursor(pygame.sprite.Sprite):
         self.rect.center = self.position
 
 class Inimigo(pygame.sprite.Sprite):
-    def __init__(self, x, y, tipo):
+    def __init__(self, x, y, tipo, direcao):
         super(Inimigo, self).__init__()
         self.position = pygame.math.Vector2(x,y)
         self.morta = False
@@ -112,6 +115,7 @@ class Inimigo(pygame.sprite.Sprite):
         self.valor = 0
         self.hits = 0
         self.angle = 1
+        self.direcao = direcao #D ou E
 
         if (tipo == 'formiga'):
             self.tipo = 'formiga'
@@ -126,7 +130,7 @@ class Inimigo(pygame.sprite.Sprite):
             self.valor = 10
             self.image = pygame.image.load('imagens/formiga.png')
             self.image = pygame.transform.scale(self.image, (60,60)) 
-            self.speed = 5
+            self.speed = 2
             self.maxhits = 2
         
         if (tipo == 'escorpiao'):
@@ -134,13 +138,18 @@ class Inimigo(pygame.sprite.Sprite):
             self.valor = 20
             self.image = pygame.image.load('imagens/formiga.png')
             self.image = pygame.transform.scale(self.image, (80,80)) 
-            self.speed = 10
+            self.speed = 1
             self.maxhits = 3
         
         self.rect = self.image.get_rect()
         self.rect.center = self.position
         self.somMorte = pygame.mixer.Sound('audios/smash.mp3')
-        self.image = pygame.transform.rotate(self.image, 180)
+
+        if direcao == "D":
+            self.image = pygame.transform.rotate(self.image, 315)
+
+        else:
+            self.image = pygame.transform.rotate(self.image, 135)
 
   
 
@@ -148,6 +157,12 @@ class Inimigo(pygame.sprite.Sprite):
         # Atualiza a posição do retângulo da nave
         #self.angle += 1
         #self.image = pygame.transform.rotate(self.image, self.angle) #KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKk
+        
+        if not self.morta:
+            if self.direcao == "D":
+                self.position.x += self.speed
+            else:
+                self.position.x -= self.speed
 
         #self.position.x += self.speed
         if self.morta:
@@ -211,22 +226,47 @@ def pause():
 
 def prim_fase():
     pontuacao = 0
+    imgbg = pygame.image.load('imagens/mesa.png').convert_alpha()
     game_paused = False
     
+    onda1 = []
+
     cursor = Cursor()
     
+    inimigos_fila = []
+
+    #onda 1
+    for i in range(5):
+        dir_atual = choice(['D','E'])
+        range_x = []
+        range_y = [300,400,500,600,700]
+        if (dir_atual == 'D'):
+            range_x = [-99,0]
+            inimigos_fila.append([randint(range_x[0], range_x[1]),choice(range_y),'formiga',dir_atual])
+        else:
+            range_x = [screen_width,screen_width+99]
+            inimigos_fila.append([randint(range_x[0], range_x[1]),choice(range_y),'formiga',dir_atual])
+        print('inifila: ',inimigos_fila)
+
+    for i in range(3):
+        onda1.append(inimigos_fila[i])
+    print('onda 1:', onda1)
+
+    for i in onda1:
+        ini = Inimigo(i[0], i[1], i[2], i[3])
+        inimigos.append(ini)
+        inimigos_fila.remove(i)
+
     all_sprites.add(cursor)
-    inimigos.append(Inimigo(100,200, 'formiga'))
-    inimigos.append(Inimigo(200,300, 'barata'))
-    inimigos.append(Inimigo(300,400, 'escorpiao'))
     for inimigo in inimigos:
         all_sprites.add(inimigo)
     
     running = True
     while running:
-        screen.fill((255,255,255))  # Preenche o fundo de branco
+        bg = screen.blit(imgbg,[0,0])
+        #screen.fill((255,255,255))  # Preenche o fundo de branco
         all_sprites.draw(screen)
-        
+
         if game_paused:
             id = pause()
             if id == 1:
@@ -250,7 +290,18 @@ def prim_fase():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     game_paused = not game_paused
-    return
+
+        #if inimigos_fila == [] and inimigos == []: #ou seja, ja nao tem ninguem vivo ou prestes a spawnar
+        #        pygame.time.delay(5000) #adiciona tempo pro fim de fase
+        #        self.somRecarga = pygame.mixer.Sound('audios/arma.mp3') #som para fim de fase
+        #        self.somRecarga.set_volume(volume) #som para fim de fase
+        #        self.somRecarga.play() #som para fim de fase
+        #        
+        #        mostra_resultados() #acho a boa
+        #
+        #
+
+    return pontuacao
 
 def setVolume(volumeNovo):
     global volume
@@ -271,7 +322,6 @@ def menuConfig():
         volume_up = pygame.image.load("imagens/volup.png")
         botao_sair = pygame.image.load("imagens/butao_quit.png")
         botao_config = pygame.image.load("imagens/butao_config.png")
-        
         running_menu = True
         
 
@@ -347,7 +397,7 @@ def main():
         #drawText("HAHAHAHAHAHAHA", 24, font, 100, 100, (255,255,255))
 
         if Button(500, 200, botao_jogar, 1).draw():
-            prim_fase()
+            pontuacao1 = prim_fase()
         
         if Button(500, 400, botao_config, 1).draw(): 
             menuConfig()
