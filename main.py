@@ -425,7 +425,8 @@ def segu_fase():
     inimigos_mortos = []
     pontuacao = 0
     total_inimigos = 12
-    imgbg = pygame.image.load('imagens/mesa.png').convert_alpha()
+    imgbg = pygame.image.load('imagens/banheiro.png').convert_alpha()
+    imgbg = pygame.transform.scale(imgbg, (screen_width, screen_height))
     game_paused = False
     
     gotms = []
@@ -521,7 +522,8 @@ def terc_fase():
     inimigos_mortos = []
     pontuacao = 0
     total_inimigos = 15 # 3 baratas e 3 escorpioes
-    imgbg = pygame.image.load('imagens/mesa.png').convert_alpha()
+    imgbg = pygame.image.load('imagens/jardim.png').convert_alpha()
+    imgbg = pygame.transform.scale(imgbg, (screen_width, screen_height))
     baratas = 3
     game_paused = False
 
@@ -536,15 +538,15 @@ def terc_fase():
         range_x = []
         range_y = [300,400,500,600,700]
         if (dir_atual == 'D'):
-            range_x = [-99,-30]
+            range_x = [-80,-30]
             inimigos.append(Inimigo(randint(range_x[0], range_x[1]),choice(range_y), bixo, dir_atual))
         else:
-            range_x = [screen_width+30,screen_width+99]
+            range_x = [screen_width+30,screen_width+80]
             inimigos.append(Inimigo(randint(range_x[0], range_x[1]),choice(range_y), bixo, dir_atual))
     
-    inimigos.insert(6,Inimigo(randint(-99,-30),choice([300,400,500,600,700]),'barata',choice(['D','E'])))
-    inimigos.insert(8,Inimigo(randint(-99,-30),choice([300,400,500,600,700]),'barata',choice(['D','E'])))
-    inimigos.insert(9,Inimigo(randint(-99,-30),choice([300,400,500,600,700]),'barata',choice(['D','E'])))
+    inimigos.append(Inimigo(-50,400,'barata','D'))
+    inimigos.append(Inimigo(-50,100,'barata','D'))
+    inimigos.insert(8,Inimigo(-50,200,'barata','D'))
     inimigos.append(Inimigo(-60,400,'escorpiao','D'))
     inimigos.append(Inimigo(-99,200,'escorpiao','D'))
     inimigos.append(Inimigo(screen_width+60,300,'escorpiao','E'))
@@ -717,8 +719,8 @@ def main():
         #drawText("HAHAHAHAHAHAHA", 24, font, 100, 100, (255,255,255))
 
         if Button(500, 200, botao_jogar, 1).draw():
-            #terc_fase()
-            prim_fase()
+            terc_fase()
+            #prim_fase()
         
         if Button(500, 400, botao_config, 1).draw(): 
             menuConfig()
