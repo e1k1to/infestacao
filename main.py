@@ -20,6 +20,7 @@ all_sprites = pygame.sprite.Group()
 inimigos = []
 inimigos_mortos = []
 inimigos_fila = []
+inimigos_perdidos = []
 posicoes = ['D','E']
 game_menu = True
 
@@ -106,6 +107,7 @@ class Cursor(pygame.sprite.Sprite):
         
         self.rect.center = self.position
 
+
 class Inimigo(pygame.sprite.Sprite):
     def __init__(self, x, y, tipo, direcao):
         super(Inimigo, self).__init__()
@@ -114,6 +116,7 @@ class Inimigo(pygame.sprite.Sprite):
         self.alpha = 255
         self.valor = 0
         self.hits = 0
+        self.movendo = False
         self.angle = 1
         self.direcao = direcao #D ou E
 
@@ -121,23 +124,23 @@ class Inimigo(pygame.sprite.Sprite):
             self.tipo = 'formiga'
             self.valor = 5
             self.image = pygame.image.load('imagens/formiga.png')
-            self.image = pygame.transform.scale(self.image, (50,50)) 
+            self.image = pygame.transform.scale(self.image, (70,70)) 
             self.speed = 3
             self.maxhits = 1
         
         if (tipo == 'barata'):
             self.tipo = 'barata'
             self.valor = 10
-            self.image = pygame.image.load('imagens/formiga.png')
-            self.image = pygame.transform.scale(self.image, (60,60)) 
+            self.image = pygame.image.load('imagens/barata.png')
+            self.image = pygame.transform.scale(self.image, (80,80)) 
             self.speed = 2
             self.maxhits = 2
         
         if (tipo == 'escorpiao'):
             self.tipo = 'escorpiao'
             self.valor = 20
-            self.image = pygame.image.load('imagens/formiga.png')
-            self.image = pygame.transform.scale(self.image, (80,80)) 
+            self.image = pygame.image.load('imagens/escorpiao.png')
+            self.image = pygame.transform.scale(self.image, (100,100)) 
             self.speed = 1
             self.maxhits = 3
         
@@ -148,17 +151,28 @@ class Inimigo(pygame.sprite.Sprite):
         if direcao == "D":
             self.image = pygame.transform.rotate(self.image, 315)
 
+        elif direcao == "E" and tipo == 'escorpiao':
+            self.image = pygame.transform.rotate(self.image, 315)
+            self.image = pygame.transform.flip(self.image,True,False)
+
         else:
             self.image = pygame.transform.rotate(self.image, 135)
 
-  
+    def movimentar(self):
+        self.movendo = True
 
     def update(self):
         # Atualiza a posição do retângulo da nave
         #self.angle += 1
         #self.image = pygame.transform.rotate(self.image, self.angle) #KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKk
         
-        if not self.morta:
+        x, y = self.position
+
+        if(x > screen_width+100 or x < -100):
+            self.kill()
+            inimigos.remove(self)
+
+        if not self.morta and self.movendo:
             if self.direcao == "D":
                 self.position.x += self.speed
             else:
@@ -181,11 +195,35 @@ class Inimigo(pygame.sprite.Sprite):
         self.hits += 1
 
         if self.hits == self.maxhits:
-            self.image = pygame.image.load('imagens/formiga_morta.png')
-            self.image = pygame.transform.scale(self.image, (50,50))
+            if self.tipo == 'formiga':
+                self.image = pygame.image.load('imagens/formiga_morta.png')
+                self.image = pygame.transform.scale(self.image, (70,70)) 
+                if self.direcao == 'D':
+                    self.image = pygame.transform.rotate(self.image, 315)
+                else:
+                    self.image = pygame.transform.rotate(self.image, 135)
+
+            if self.tipo == 'barata':
+                self.image = pygame.image.load('imagens/barata_morta.png')
+                self.image = pygame.transform.scale(self.image, (80,80)) 
+                if self.direcao == 'D':
+                    self.image = pygame.transform.rotate(self.image, 315)
+                else:
+                    self.image = pygame.transform.rotate(self.image, 135)
+
+            if self.tipo == 'escorpiao':
+                self.image = pygame.image.load('imagens/escorpiao_morto.png')
+                self.image = pygame.transform.scale(self.image, (100,100)) 
+                self.image = pygame.transform.rotate(self.image, 315)
+                if self.direcao == 'E':
+                    self.image = pygame.transform.flip(self.image,True,False)
+
             self.morta = True
             return True
         return False
+
+    def morterapida(self):
+        self.kill()
 
 class Button(pygame.sprite.Sprite):
     def __init__(self, x, y, image, scale):
@@ -216,67 +254,143 @@ def pause():
     screen.blit(borras, (0,0))
 
     butao_continue = pygame.image.load("imagens/butao_continua.png")
-    if Button(500, 200, butao_continue, 1).draw():
+    if Button(500, 250, butao_continue, 1).draw():
         return 1 #volta pro jogo 
 
     butao_quit = pygame.image.load("imagens/butao_quit.png")
-    if Button(500, 300, butao_quit, 1).draw():
+    if Button(500, 500, butao_quit, 1).draw():
         return 2 #volta pro menu
 
+def mostra_resultados(fase):
+    texto_resultado = ''
+    global inimigos_mortos
+    soma_pontos = 0
+    for i in inimigos_mortos:
+        if i == 'formiga':
+            soma_pontos += 20
+        elif i == 'barata':
+            soma_pontos += 50
+        else:
+            soma_pontos += 100
+    running = True
+    if fase == 1:
+        if soma_pontos >= 180:
+            texto_resultado = "Pontuação Perfeita"
+        elif soma_pontos >= 120:
+            texto_resultado = "Pontuação Boa"
+        else:
+            texto_resultado = "Pontuação Baixa"
+    elif fase == 2:
+        if soma_pontos >= 270:
+            texto_resultado = "Pontuação Perfeita"
+        elif soma_pontos >= 190:
+            texto_resultado = "Pontuação Boa"
+        else:
+            texto_resultado = "Pontuação Baixa"
+
+    else:
+        if soma_pontos >= 630:
+            texto_resultado = "Pontuação Perfeita"
+        elif soma_pontos >= 400:
+            texto_resultado = "Pontuação Boa"
+        else:
+            texto_resultado = "Pontuação Baixa"
+
+    global volume
+    vlm = volume*100
+    global sens
+    while running:
+        screen.fill((128,128,128))  # Preenche o fundo de branco
+        drawText(f"Pontuação = {soma_pontos}", 80, 'fonts/AnonymousPro-Regular.ttf', 500, 300, (255,255,255))
+        drawText(texto_resultado, 80, 'fonts/AnonymousPro-Regular.ttf', 500, 400, (255,255,255))
+        prox_fase = pygame.image.load("imagens/butao_proxfase.png")
+        botao_sair = pygame.image.load("imagens/butao_quit.png")
+        running_menu = True
+
+        if(fase < 3):
+            if Button(500, 600, prox_fase, 1).draw():
+                if(fase == 1):
+                    running = False
+                    segu_fase()
+                if(fase == 2):
+                    running = False
+                    terc_fase()
+
+        if Button(500, 725, botao_sair, 1).draw(): 
+            running = False
+                
+        clk = pygame.time.Clock().tick()
+        clock.tick(60)
+        pygame.display.flip()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+    return
+    #formiga, barata, escorpiao
 
 def prim_fase():
+    global inimigos_mortos
+    inimigos_mortos = []
     pontuacao = 0
+    total_inimigos = 9
     imgbg = pygame.image.load('imagens/mesa.png').convert_alpha()
     game_paused = False
-    
-    onda1 = []
 
     cursor = Cursor()
     
-    inimigos_fila = []
-
-    #onda 1
-    for i in range(5):
+    #todos inimigos
+    for i in range(total_inimigos):
         dir_atual = choice(['D','E'])
         range_x = []
         range_y = [300,400,500,600,700]
         if (dir_atual == 'D'):
-            range_x = [-99,0]
-            inimigos_fila.append([randint(range_x[0], range_x[1]),choice(range_y),'formiga',dir_atual])
+            range_x = [-99,-10]
+            inimigos.append(Inimigo(randint(range_x[0], range_x[1]),choice(range_y),'formiga',dir_atual))
         else:
-            range_x = [screen_width,screen_width+99]
-            inimigos_fila.append([randint(range_x[0], range_x[1]),choice(range_y),'formiga',dir_atual])
-        print('inifila: ',inimigos_fila)
-
-    for i in range(3):
-        onda1.append(inimigos_fila[i])
-    print('onda 1:', onda1)
-
-    for i in onda1:
-        ini = Inimigo(i[0], i[1], i[2], i[3])
-        inimigos.append(ini)
-        inimigos_fila.remove(i)
+            range_x = [screen_width+10,screen_width+99]
+            inimigos.append(Inimigo(randint(range_x[0], range_x[1]),choice(range_y),'formiga',dir_atual))
 
     all_sprites.add(cursor)
     for inimigo in inimigos:
         all_sprites.add(inimigo)
     
+    gotms = [False, False, False]
     running = True
     while running:
         bg = screen.blit(imgbg,[0,0])
         #screen.fill((255,255,255))  # Preenche o fundo de branco
         all_sprites.draw(screen)
+        
+        if not gotms[0]: #wave 1
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[0] = True
+
+        if len(inimigos) == total_inimigos-3 and not gotms[1]: #wave 2
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[1] = True
+        
+        if len(inimigos) == total_inimigos-6 and not gotms[2]: #wave 3
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[2] = True
 
         if game_paused:
-            id = pause()
-            if id == 1:
+            ids = pause()
+            if ids == 1:
                 game_paused = False
-            elif id == 2:
+            elif ids == 2:
                 all_sprites.remove(cursor)
                 cursor.kill()
-                for inimigo in inimigos:
-                    inimigo.kill()
-                running = False
+                for i in range(len(inimigos)-1,-1,-1):
+                    inimigos[i].morterapida()
+                    inimigos.pop(i)
+                pygame.time.delay(150)
+                return
             
         else:
             all_sprites.update()
@@ -291,17 +405,223 @@ def prim_fase():
                 if event.key == pygame.K_ESCAPE:
                     game_paused = not game_paused
 
-        #if inimigos_fila == [] and inimigos == []: #ou seja, ja nao tem ninguem vivo ou prestes a spawnar
-        #        pygame.time.delay(5000) #adiciona tempo pro fim de fase
-        #        self.somRecarga = pygame.mixer.Sound('audios/arma.mp3') #som para fim de fase
-        #        self.somRecarga.set_volume(volume) #som para fim de fase
-        #        self.somRecarga.play() #som para fim de fase
-        #        
-        #        mostra_resultados() #acho a boa
-        #
-        #
+        #and pygame.time.get_ticks() - self.ultimoTiro >= self.cooldown
 
-    return pontuacao
+        if not inimigos: #ou seja, ja nao tem ninguem vivo ou prestes a spawnar
+            somVitoria = pygame.mixer.Sound('audios/vitoria.mp3') #som para fim de fase
+            somVitoria.set_volume(volume) #som para fim de fase
+            somVitoria.play() #som para fim de fase
+            all_sprites.remove(cursor)
+            cursor.kill()
+            mostra_resultados(1) #acho a boa
+            running = False
+            return
+
+
+
+
+def segu_fase():
+    global inimigos_mortos
+    inimigos_mortos = []
+    pontuacao = 0
+    total_inimigos = 12
+    imgbg = pygame.image.load('imagens/mesa.png').convert_alpha()
+    game_paused = False
+    
+    gotms = []
+
+    cursor = Cursor()
+    
+    #todos inimigos
+    for i in range(total_inimigos-1):
+        dir_atual = choice(['D','E'])
+        range_x = []
+        range_y = [300,400,500,600,700]
+        if (dir_atual == 'D'):
+            range_x = [-99,-10]
+            inimigos.append(Inimigo(randint(range_x[0], range_x[1]),choice(range_y),'formiga',dir_atual))
+        else:
+            range_x = [screen_width+10,screen_width+99]
+            inimigos.append(Inimigo(randint(range_x[0], range_x[1]),choice(range_y),'formiga',dir_atual))
+
+    inimigos.append(Inimigo(-50,400,'barata','D'))
+
+    all_sprites.add(cursor)
+    for inimigo in inimigos:
+        all_sprites.add(inimigo)
+    
+    for i in range(4): #waves
+        gotms.append(False)
+    running = True
+    while running:
+        bg = screen.blit(imgbg,[0,0])
+        #screen.fill((255,255,255))  # Preenche o fundo de branco
+        all_sprites.draw(screen)
+        
+        if not gotms[0]: #wave 1
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[0] = True
+
+        if len(inimigos) == total_inimigos-3 and not gotms[1]: #wave 2
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[1] = True
+        
+        if len(inimigos) == total_inimigos-6 and not gotms[2]: #wave 3
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[2] = True
+        
+        if len(inimigos) == total_inimigos-9 and not gotms[3]: #wave 4
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[2] = True
+
+        if game_paused:
+            ids = pause()
+            if ids == 1:
+                game_paused = False
+            elif ids == 2:
+                all_sprites.remove(cursor)
+                cursor.kill()
+                for i in range(len(inimigos)-1,-1,-1):
+                    inimigos[i].morterapida()
+                    inimigos.pop(i)
+                pygame.time.delay(150)
+                return
+            
+        else:
+            all_sprites.update()
+
+        clk = pygame.time.Clock().tick()
+        pygame.display.flip()
+        clock.tick(60)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    game_paused = not game_paused
+
+        #and pygame.time.get_ticks() - self.ultimoTiro >= self.cooldown
+
+        if not inimigos: #ou seja, ja nao tem ninguem vivo ou prestes a spawnar
+            somVitoria = pygame.mixer.Sound('audios/vitoria.mp3') #som para fim de fase
+            somVitoria.set_volume(volume) #som para fim de fase
+            somVitoria.play() #som para fim de fase
+            all_sprites.remove(cursor)
+            cursor.kill()
+            mostra_resultados(2) #acho a boa
+            running = False
+            return
+
+def terc_fase():
+    global inimigos_mortos
+    inimigos_mortos = []
+    pontuacao = 0
+    total_inimigos = 15 # 3 baratas e 3 escorpioes
+    imgbg = pygame.image.load('imagens/mesa.png').convert_alpha()
+    baratas = 3
+    game_paused = False
+
+    gotms = []
+
+    cursor = Cursor()
+    
+    #todos inimigos
+    for i in range(total_inimigos-6):
+        bixo = 'formiga'
+        dir_atual = choice(['D','E'])
+        range_x = []
+        range_y = [300,400,500,600,700]
+        if (dir_atual == 'D'):
+            range_x = [-99,-30]
+            inimigos.append(Inimigo(randint(range_x[0], range_x[1]),choice(range_y), bixo, dir_atual))
+        else:
+            range_x = [screen_width+30,screen_width+99]
+            inimigos.append(Inimigo(randint(range_x[0], range_x[1]),choice(range_y), bixo, dir_atual))
+    
+    inimigos.insert(6,Inimigo(randint(-99,-30),choice([300,400,500,600,700]),'barata',choice(['D','E'])))
+    inimigos.insert(8,Inimigo(randint(-99,-30),choice([300,400,500,600,700]),'barata',choice(['D','E'])))
+    inimigos.insert(9,Inimigo(randint(-99,-30),choice([300,400,500,600,700]),'barata',choice(['D','E'])))
+    inimigos.append(Inimigo(-60,400,'escorpiao','D'))
+    inimigos.append(Inimigo(-99,200,'escorpiao','D'))
+    inimigos.append(Inimigo(screen_width+60,300,'escorpiao','E'))
+
+    all_sprites.add(cursor)
+    for inimigo in inimigos:
+        all_sprites.add(inimigo)
+    
+    for i in range(5): #waves
+        gotms.append(False)
+
+    running = True
+    while running:
+        bg = screen.blit(imgbg,[0,0])
+        #screen.fill((255,255,255))  # Preenche o fundo de branco
+        all_sprites.draw(screen)
+        
+        if not gotms[0]: #wave 1
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[0] = True
+
+        if len(inimigos) == total_inimigos-3 and not gotms[1]: #wave 2
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[1] = True
+        
+        if len(inimigos) == total_inimigos-6 and not gotms[2]: #wave 3
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[2] = True
+        
+        if len(inimigos) == total_inimigos-9 and not gotms[3]: #wave 4
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[3] = True
+        
+        if len(inimigos) == total_inimigos-12 and not gotms[4]: #wave 5
+            for i in range(3):
+                inimigos[i].movimentar()
+            gotms[4] = True
+
+        if game_paused:
+            ids = pause()
+            if ids == 1:
+                game_paused = False
+            elif ids == 2:
+                all_sprites.remove(cursor)
+                cursor.kill()
+                for i in range(len(inimigos)-1,-1,-1):
+                    inimigos[i].morterapida()
+                    inimigos.pop(i)
+                pygame.time.delay(150)
+                return
+            
+        else:
+            all_sprites.update()
+
+        clk = pygame.time.Clock().tick()
+        pygame.display.flip()
+        clock.tick(60)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    game_paused = not game_paused
+
+        if not inimigos: #ou seja, ja nao tem ninguem vivo ou prestes a spawnar
+            somVitoria = pygame.mixer.Sound('audios/vitoria.mp3') #som para fim de fase
+            somVitoria.set_volume(volume) #som para fim de fase
+            somVitoria.play() #som para fim de fase
+            all_sprites.remove(cursor)
+            cursor.kill()
+            mostra_resultados(3) #acho a boa
+            running = False
+            return
 
 def setVolume(volumeNovo):
     global volume
@@ -397,7 +717,8 @@ def main():
         #drawText("HAHAHAHAHAHAHA", 24, font, 100, 100, (255,255,255))
 
         if Button(500, 200, botao_jogar, 1).draw():
-            pontuacao1 = prim_fase()
+            #terc_fase()
+            prim_fase()
         
         if Button(500, 400, botao_config, 1).draw(): 
             menuConfig()
