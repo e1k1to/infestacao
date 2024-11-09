@@ -719,8 +719,8 @@ def main():
         #drawText("HAHAHAHAHAHAHA", 24, font, 100, 100, (255,255,255))
 
         if Button(500, 200, botao_jogar, 1).draw():
-            terc_fase()
-            #prim_fase()
+            #terc_fase()
+            prim_fase()
         
         if Button(500, 400, botao_config, 1).draw(): 
             menuConfig()
