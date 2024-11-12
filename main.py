@@ -11,8 +11,6 @@ import pygame
 from pygame.locals import *
 from random import randint, choice
 
-pontuacao = 0 
-
 volume = 0.2
 sens = 7
 clock = pygame.time.Clock()
@@ -92,7 +90,7 @@ class Cursor(pygame.sprite.Sprite):
         ycentro = self.rect.center[1]
         
         for inimigo in inimigos:
-            if(xcentro > inimigo.rect.left 
+            if(xcentro > inimigo.rect.left
                and xcentro < inimigo.rect.right 
                and ycentro > inimigo.rect.top 
                and ycentro < inimigo.rect.bottom
@@ -306,7 +304,7 @@ def mostra_resultados(fase):
         prox_fase = pygame.image.load("imagens/butao_proxfase.png")
         botao_sair = pygame.image.load("imagens/butao_quit.png")
         running_menu = True
-
+        
         if(fase < 3):
             if Button(500, 600, prox_fase, 1).draw():
                 if(fase == 1):
@@ -315,9 +313,41 @@ def mostra_resultados(fase):
                 if(fase == 2):
                     running = False
                     terc_fase()
+                
 
-        if Button(500, 725, botao_sair, 1).draw(): 
-            running = False
+        if fase < 3:
+            if Button(500, 725, botao_sair, 1).draw():
+                running = False
+        else:
+            if Button(500, 500, botao_sair, 1).draw():
+                pygame.time.delay(150)
+                running = False
+                if fase == 3:
+                    running = False
+                    game_story = True
+
+                    while game_story:
+                        screen.fill((128,128,128))  # Preenche o fundo de branco
+                        drawText(f"Boa tarde, senhor José.", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 100, (255,255,255))
+                        drawText(f"Agradeço fortemente sua ajuda na remoção das", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 150, (255,255,255))
+                        drawText(f"pragas da minha casa, o senhor realmente é", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 200, (255,255,255))
+                        drawText(f"o melhor no que faz! Caso as pragas voltem,", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 250, (255,255,255))
+                        drawText(f"já sei quem devo chamar!", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 300, (255,255,255))
+                        drawText(f"Assinado: James.", 40, 'fonts/AnonymousPro-Regular.ttf', 700, 475, (255,255,255))
+                        continua = pygame.image.load("imagens/butao_continua.png")
+
+                        if Button(500, 650, continua, 1).draw():
+                            game_story = False
+                            running = False
+
+                        clock.tick(60)
+                        pygame.display.flip()
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                pygame.quit()
+                            if event.type == pygame.KEYDOWN:
+                                if event.key == pygame.K_ESCAPE:
+                                    game_story = False
                 
         clk = pygame.time.Clock().tick()
         clock.tick(60)
@@ -334,10 +364,35 @@ def mostra_resultados(fase):
 def prim_fase():
     global inimigos_mortos
     inimigos_mortos = []
-    pontuacao = 0
     total_inimigos = 9
     imgbg = pygame.image.load('imagens/mesa.png').convert_alpha()
     game_paused = False
+
+    game_story = True
+
+    while game_story:
+        screen.fill((128,128,128))  # Preenche o fundo de branco
+        drawText(f"Boa tarde, senhor José.", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 100, (255,255,255))
+        drawText(f"Tenho enfrentado problemas com diferentes", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 150, (255,255,255))
+        drawText(f"tipos de pragas, minhas fontes me disseram", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 200, (255,255,255))
+        drawText(f"que você é o melhor exterminador de pragas", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 250, (255,255,255))
+        drawText(f"cidade.", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 300, (255,255,255))
+        drawText(f"Estarei contando com sua ajuda.", 40, 'fonts/AnonymousPro-Regular.ttf', 500, 375, (255,255,255))
+        drawText(f"Assinado: James.", 40, 'fonts/AnonymousPro-Regular.ttf', 700, 475, (255,255,255))
+        continua = pygame.image.load("imagens/butao_continua.png")
+
+        if Button(500, 650, continua, 1).draw():
+            game_story = False
+
+        clock.tick(60)
+        pygame.display.flip()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+            
 
     cursor = Cursor()
     
@@ -417,13 +472,9 @@ def prim_fase():
             running = False
             return
 
-
-
-
 def segu_fase():
     global inimigos_mortos
     inimigos_mortos = []
-    pontuacao = 0
     total_inimigos = 12
     imgbg = pygame.image.load('imagens/banheiro.png').convert_alpha()
     imgbg = pygame.transform.scale(imgbg, (screen_width, screen_height))
@@ -520,7 +571,6 @@ def segu_fase():
 def terc_fase():
     global inimigos_mortos
     inimigos_mortos = []
-    pontuacao = 0
     total_inimigos = 15 # 3 baratas e 3 escorpioes
     imgbg = pygame.image.load('imagens/jardim.png').convert_alpha()
     imgbg = pygame.transform.scale(imgbg, (screen_width, screen_height))
@@ -719,8 +769,8 @@ def main():
         #drawText("HAHAHAHAHAHAHA", 24, font, 100, 100, (255,255,255))
 
         if Button(500, 200, botao_jogar, 1).draw():
-            #terc_fase()
-            prim_fase()
+            terc_fase()
+            #prim_fase() TODO
         
         if Button(500, 400, botao_config, 1).draw(): 
             menuConfig()
